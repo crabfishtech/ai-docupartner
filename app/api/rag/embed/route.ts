@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
       );
       
       // Save the memory vector store to a JSON file
-      vectorStorePath = path.join(process.cwd(), "files", conversation, "vector_store.json");
+      vectorStorePath = path.join(process.cwd(), "files", "vector-store.json");
       
       // Since MemoryVectorStore doesn't have a serialize method, we'll manually extract the data
       // @ts-ignore - Accessing internal property for serialization
@@ -120,7 +120,7 @@ export async function POST(req: NextRequest) {
     );
     
     // Save the memory vector store to a JSON file
-    vectorStorePath = path.join(process.cwd(), "files", conversation, "vector_store.json");
+    vectorStorePath = path.join(process.cwd(), "files", "vector-store.json");
     
     // Since MemoryVectorStore doesn't have a serialize method, we'll manually extract the data
     // @ts-ignore - Accessing internal property for serialization

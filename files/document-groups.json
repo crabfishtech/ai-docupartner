@@ -8,8 +8,14 @@
     },
     {
       "guid": "b8b7ba57-067f-472c-965b-f8f85fbb3aaf",
-      "name": "Random Projects",
+      "name": "Crabfish Tech",
       "createdAt": "2025-04-25T18:21:41.164Z",
+      "documentCount": 0
+    },
+    {
+      "guid": "d3c06fa5-c2b4-4d8c-a3a7-a7b8cc9fc563",
+      "name": "AI Projects",
+      "createdAt": "2025-04-25T20:24:17.473Z",
       "documentCount": 0
     }
   ]

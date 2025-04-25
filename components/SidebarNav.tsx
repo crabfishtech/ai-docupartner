@@ -1,4 +1,5 @@
 "use client";
+import { Group } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -148,6 +149,7 @@ export default function SidebarNav() {
                     onClick={() => toggleGroupExpanded(group.guid)}
                   >
                     <div className="font-medium flex items-center">
+                      <Group className="h-4 w-4 mr-2 text-zinc-500" />
                       <span className="text-sm">{group.name}</span>
                       <span className="ml-2 text-xs text-zinc-500 dark:text-zinc-400 px-2 py-0.5">
                         {groupConversations.length}
@@ -183,7 +185,7 @@ export default function SidebarNav() {
                                   type="text"
                                   value={newName}
                                   onChange={(e) => setNewName(e.target.value)}
-                                  className="flex-1 px-3 py-2 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-zinc-500"
+                                  className="flex-1 px-2 py-2 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-zinc-500"
                                   autoFocus
                                   onBlur={() => setEditingGuid(null)}
                                 />
@@ -199,7 +201,7 @@ export default function SidebarNav() {
                               <>
                                 <Link
                                   href={`/?id=${conv.guid}`}
-                                  className={`flex-1 text-left px-3 py-2 rounded transition-colors text-sm ${
+                                  className={`flex-1 text-left px-2 py-2 rounded transition-colors text-sm ${
                                     conv.guid === currentConversationId
                                       ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black"
                                       : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"

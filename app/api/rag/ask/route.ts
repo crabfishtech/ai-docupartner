@@ -62,6 +62,10 @@ export async function POST(req: NextRequest) {
   let vectorStore;
   let useDirectQA = false;
   
+  // Define paths for both conversation-specific and global vector stores
+  const conversationVectorStorePath = path.join(process.cwd(), "files", "conversations", conversation, "vector_store.json");
+  const globalVectorStorePath = path.join(process.cwd(), "files", "vector-store.json");
+  
   if (vectorStoreType === "chroma") {
     try {
       // Try to use Chroma if it's configured
@@ -72,8 +76,16 @@ export async function POST(req: NextRequest) {
       console.error("Error connecting to Chroma:", error);
       
       // Fall back to memory vector store if available
-      const vectorStorePath = path.join(process.cwd(), "files", conversation, "vector_store.json");
-      if (fs.existsSync(vectorStorePath)) {
+      // First check conversation-specific path, then fall back to global path
+      let vectorStorePath = null;
+      
+      if (fs.existsSync(conversationVectorStorePath)) {
+        vectorStorePath = conversationVectorStorePath;
+      } else if (fs.existsSync(globalVectorStorePath)) {
+        vectorStorePath = globalVectorStorePath;
+      }
+      
+      if (vectorStorePath) {
         // Load from the saved JSON file
         try {
           const serializedData = JSON.parse(fs.readFileSync(vectorStorePath, 'utf8'));
@@ -110,8 +122,16 @@ export async function POST(req: NextRequest) {
     }
   } else {
     // Use memory vector store
-    const vectorStorePath = path.join(process.cwd(), "files", conversation, "vector_store.json");
-    if (fs.existsSync(vectorStorePath)) {
+    // First check conversation-specific path, then fall back to global path
+    let vectorStorePath = null;
+    
+    if (fs.existsSync(conversationVectorStorePath)) {
+      vectorStorePath = conversationVectorStorePath;
+    } else if (fs.existsSync(globalVectorStorePath)) {
+      vectorStorePath = globalVectorStorePath;
+    }
+    
+    if (vectorStorePath) {
       // Load from the saved JSON file
       try {
         const serializedData = JSON.parse(fs.readFileSync(vectorStorePath, 'utf8'));
