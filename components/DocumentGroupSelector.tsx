@@ -167,7 +167,7 @@ export default function DocumentGroupSelector({
               )}
             </div>
           ) : (
-            <form onSubmit={handleCreateGroup} method="post" className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -176,10 +176,17 @@ export default function DocumentGroupSelector({
                   placeholder="New group name"
                   className="block flex-1 p-2 border border-zinc-300 dark:border-zinc-700 rounded bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                   autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && newGroupName.trim() && !creating) {
+                      e.preventDefault();
+                      handleCreateGroup(e as unknown as React.FormEvent);
+                    }
+                  }}
                 />
                 <button
-                  type="submit"
+                  type="button"
                   disabled={creating || !newGroupName.trim()}
+                  onClick={(e) => handleCreateGroup(e as React.FormEvent)}
                   className="px-3 py-2 bg-black text-white rounded hover:bg-zinc-800 disabled:opacity-50 transition"
                 >
                   {creating ? "Creating..." : "Create"}
@@ -192,7 +199,7 @@ export default function DocumentGroupSelector({
                   Cancel
                 </button>
               </div>
-            </form>
+            </div>
           )}
         </>
       )}

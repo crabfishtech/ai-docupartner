@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
     
     // List files in the root directory
     const rootEntries = readdirSync(filesBaseDir, { withFileTypes: true })
-      .filter(f => f.isFile() && f.name !== 'conversations.json' && f.name !== 'document-groups.json');
+      .filter(f => f.isFile() && f.name !== 'conversations.json' && f.name !== 'document-groups.json' && f.name !== 'app-settings.json');
     
     for (const entry of rootEntries) {
       files.push(getFileInfo(entry.name, entry.name));

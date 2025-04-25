@@ -189,50 +189,7 @@ export default function ConversationPage() {
         
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto p-4 bg-zinc-50 dark:bg-zinc-950">
-          {messages.length === 0 && conversationId === "new" && (
-            <div className="flex flex-col items-center justify-center h-full py-12">
-              <div className="text-center max-w-md mx-auto">
-                <h2 className="text-2xl font-semibold mb-4">What would you like to chat about today?</h2>
-                <p className="text-zinc-500 dark:text-zinc-400 mb-8">Choose how you'd like to start this conversation</p>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex flex-col items-center p-6 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
-                    disabled={uploading}
-                  >
-                    <div className="text-3xl mb-2">📄</div>
-                    <h3 className="font-medium mb-1">Upload Documents</h3>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">
-                      Upload files to chat about their contents
-                    </p>
-                  </button>
-                  
-                  <button
-                    onClick={() => setWebSearch(true)}
-                    className="flex flex-col items-center p-6 border border-zinc-200 dark:border-zinc-800 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
-                  >
-                    <div className="text-3xl mb-2">🔍</div>
-                    <h3 className="font-medium mb-1">Web Search</h3>
-                    <p className="text-sm text-zinc-500 dark:text-zinc-400 text-center">
-                      Enable web search for up-to-date information
-                    </p>
-                  </button>
-                </div>
-                
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Or simply type your question below to get started
-                </p>
-              </div>
-            </div>
-          )}
-          
-          {messages.length === 0 && conversationId !== "new" && (
-            <div className="text-center text-zinc-400 my-8">
-              Start a conversation or upload documents to chat about.
-            </div>
-          )}
-          
+
           {messages.map((message) => (
             <div
               key={message.id}
