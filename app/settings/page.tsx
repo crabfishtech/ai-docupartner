@@ -151,7 +151,7 @@ export default function SettingsPage() {
             onChange={e => setProvider(e.target.value)}
           >
             <option value="openai">OpenAI</option>
-            <option value="anthropic">Anthropic</option>
+            <option value="anthropic" disabled>Anthropic</option>
           </select>
         </div>
         
