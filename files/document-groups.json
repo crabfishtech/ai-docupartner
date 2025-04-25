@@ -1,0 +1,16 @@
+{
+  "groups": [
+    {
+      "guid": "389422c2-43dd-433e-bf99-b6d6e70c4fd1",
+      "name": "Microfrontends",
+      "createdAt": "2025-04-25T16:07:46.433Z",
+      "documentCount": 3
+    },
+    {
+      "guid": "b8b7ba57-067f-472c-965b-f8f85fbb3aaf",
+      "name": "Random Projects",
+      "createdAt": "2025-04-25T18:21:41.164Z",
+      "documentCount": 0
+    }
+  ]
+}

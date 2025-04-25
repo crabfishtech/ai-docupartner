@@ -1,0 +1,17 @@
+[
+  {
+    "guid": "109e9fa9-9922-4d0c-8fe3-0fff0b2a028b",
+    "name": "MFE Project",
+    "groupId": "389422c2-43dd-433e-bf99-b6d6e70c4fd1"
+  },
+  {
+    "guid": "7e7f8fdf-5591-45a5-ac1b-bacfdfbb279d",
+    "name": "Microfrontend Security",
+    "groupId": "389422c2-43dd-433e-bf99-b6d6e70c4fd1"
+  },
+  {
+    "guid": "55f1d627-1af1-4544-b857-1cc0409c3107",
+    "name": "Talking about Sales",
+    "groupId": "b8b7ba57-067f-472c-965b-f8f85fbb3aaf"
+  }
+]

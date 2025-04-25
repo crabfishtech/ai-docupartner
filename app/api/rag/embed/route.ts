@@ -1,9 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
-import { existsSync, readFileSync } from "fs";
+import { existsSync, readFileSync, writeFileSync } from "fs";
 import path from "path";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-import { OpenAIEmbeddings } from "langchain/embeddings/openai";
-import { Chroma } from "langchain/vectorstores/chroma";
+import { OpenAIEmbeddings } from "@langchain/openai";
+import { Chroma } from "@langchain/community/vectorstores/chroma";
+import { MemoryVectorStore } from "langchain/vectorstores/memory";
+
+// Helper function to read settings
+function readSettings() {
+  const settingsPath = path.join(process.cwd(), "files", "app-settings.json");
+  
+  if (!existsSync(settingsPath)) {
+    // Return default settings if file doesn't exist
+    return {
+      llm_provider: "openai",
+      llm_model: "gpt-4o",
+      system_prompt: "You are a helpful assistant.",
+      vector_store: "memory" // Default to memory vector store
+    };
+  }
+  
+  try {
+    const fileContent = readFileSync(settingsPath, "utf8");
+    return JSON.parse(fileContent);
+  } catch (error) {
+    console.error("Error reading settings file:", error);
+    // Return default settings on error
+    return {
+      llm_provider: "openai",
+      llm_model: "gpt-4o",
+      system_prompt: "You are a helpful assistant.",
+      vector_store: "memory" // Default to memory vector store
+    };
+  }
+}
 
 // POST /api/rag/embed?conversation=GUID
 export async function POST(req: NextRequest) {
@@ -34,14 +64,81 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Embed and store in Chroma
-  const embeddings = new OpenAIEmbeddings({ openAIApiKey: process.env.OPENAI_API_KEY });
-  const vectorStore = await Chroma.fromTexts(
-    allChunks.map(c => c.content),
-    allChunks.map(c => c.metadata),
-    embeddings,
-    { collectionName: `conv_${conversation}` }
-  );
+  // Get settings to determine which vector store to use
+  const settings = readSettings();
+  const vectorStoreType = settings.vector_store || "memory";
+  
+  // Initialize embeddings with proper API key format
+  const embeddings = new OpenAIEmbeddings({ 
+    apiKey: process.env.OPENAI_API_KEY 
+  });
+  
+  let vectorStore;
+  let vectorStorePath;
+  
+  // Create vector store based on settings
+  if (vectorStoreType === "chroma") {
+    try {
+      // For Chroma, we'll use the external service if it's running
+      vectorStore = await Chroma.fromTexts(
+        allChunks.map(c => c.content),
+        allChunks.map(c => c.metadata),
+        embeddings,
+        { collectionName: `conv_${conversation}` }
+      );
+    } catch (error) {
+      console.error("Error creating Chroma vector store:", error);
+      // Fall back to memory vector store if Chroma fails
+      vectorStore = await MemoryVectorStore.fromTexts(
+        allChunks.map(c => c.content),
+        allChunks.map(c => c.metadata),
+        embeddings
+      );
+      
+      // Save the memory vector store to a JSON file
+      vectorStorePath = path.join(process.cwd(), "files", conversation, "vector_store.json");
+      
+      // Since MemoryVectorStore doesn't have a serialize method, we'll manually extract the data
+      // @ts-ignore - Accessing internal property for serialization
+      const memoryVectors = vectorStore.memoryVectors || [];
+      const serialized = {
+        memoryVectors: memoryVectors.map((vector: any) => ({
+          content: vector.pageContent,
+          metadata: vector.metadata,
+          embedding: vector.embedding
+        }))
+      };
+      
+      writeFileSync(vectorStorePath, JSON.stringify(serialized));
+    }
+  } else {
+    // Use memory vector store
+    vectorStore = await MemoryVectorStore.fromTexts(
+      allChunks.map(c => c.content),
+      allChunks.map(c => c.metadata),
+      embeddings
+    );
+    
+    // Save the memory vector store to a JSON file
+    vectorStorePath = path.join(process.cwd(), "files", conversation, "vector_store.json");
+    
+    // Since MemoryVectorStore doesn't have a serialize method, we'll manually extract the data
+    // @ts-ignore - Accessing internal property for serialization
+    const memoryVectors = vectorStore.memoryVectors || [];
+    const serialized = {
+      memoryVectors: memoryVectors.map((vector: any) => ({
+        content: vector.pageContent,
+        metadata: vector.metadata,
+        embedding: vector.embedding
+      }))
+    };
+    
+    writeFileSync(vectorStorePath, JSON.stringify(serialized));
+  }
 
-  return NextResponse.json({ embedded: allChunks.length });
+  return NextResponse.json({ 
+    embedded: allChunks.length,
+    vectorStore: vectorStoreType,
+    fallbackUsed: vectorStorePath ? true : false
+  });
 }

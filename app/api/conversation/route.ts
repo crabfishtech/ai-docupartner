@@ -24,17 +24,23 @@ export async function GET() {
 
 // POST /api/conversation - create new
 export async function POST(req: NextRequest) {
-  const guid = randomUUID();
-  const filesDir = path.join(filesRoot, guid);
-  if (!existsSync(filesDir)) {
-    mkdirSync(filesDir, { recursive: true });
+  try {
+    const { groupId } = await req.json();
+    const guid = randomUUID();
+    const filesDir = path.join(filesRoot, guid);
+    if (!existsSync(filesDir)) {
+      mkdirSync(filesDir, { recursive: true });
+    }
+    const conversations = readConversations();
+    const name = `Conversation ${conversations.length + 1}`;
+    const newConv = { guid, name, groupId };
+    conversations.push(newConv);
+    writeConversations(conversations);
+    return NextResponse.json(newConv);
+  } catch (error) {
+    console.error("Error creating conversation:", error);
+    return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
   }
-  const conversations = readConversations();
-  const name = `Conversation ${conversations.length + 1}`;
-  const newConv = { guid, name };
-  conversations.push(newConv);
-  writeConversations(conversations);
-  return NextResponse.json(newConv);
 }
 
 // PUT /api/conversation?guid=... - rename conversation

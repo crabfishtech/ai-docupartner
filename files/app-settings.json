@@ -1,0 +1,7 @@
+{
+  "llm_provider": "openai",
+  "llm_model": "gpt-4o",
+  "system_prompt": "You are a helpful assistant used to answer questions about documents I have uploaded.",
+  "llm_api_key": "",
+  "vector_store": "memory"
+}

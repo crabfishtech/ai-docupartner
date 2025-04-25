@@ -207,7 +207,7 @@ export default function DocumentsPage() {
   );
 
   return (
-    <main className="flex flex-col items-start justify-start min-h-screen p-8 ml-64 w-full">
+    <main className="flex flex-col items-start justify-start min-h-screen p-8 ml-72 w-full">
       <div className="w-full flex flex-col gap-8">
         <section className="w-full bg-white dark:bg-zinc-900 rounded-lg shadow p-8 flex flex-col">
           <h1 className="text-2xl font-semibold mb-6">Upload Documents</h1>

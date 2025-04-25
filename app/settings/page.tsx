@@ -8,6 +8,7 @@ export default function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
   const [systemPrompt, setSystemPrompt] = useState("");
+  const [vectorStore, setVectorStore] = useState<string>("memory");
   const [saved, setSaved] = useState(false);
   
   // Define model categories and models for each provider
@@ -64,6 +65,7 @@ export default function SettingsPage() {
         if (settings.llm_model) setModel(settings.llm_model);
         if (settings.llm_api_key) setApiKey(settings.llm_api_key);
         if (settings.system_prompt) setSystemPrompt(settings.system_prompt);
+        if (settings.vector_store) setVectorStore(settings.vector_store);
         
         // If no model is set but provider is, set default model
         if (!settings.llm_model && settings.llm_provider) {
@@ -109,7 +111,8 @@ export default function SettingsPage() {
           llm_provider: provider,
           llm_model: model,
           llm_api_key: apiKey,
-          system_prompt: systemPrompt
+          system_prompt: systemPrompt,
+          vector_store: vectorStore
         })
       });
       
@@ -118,11 +121,11 @@ export default function SettingsPage() {
         throw new Error(errorData.error || 'Failed to save settings');
       }
       
-      // Also save to localStorage as a backup
+      // Only save non-sensitive settings to localStorage as a backup
       localStorage.setItem("llm_provider", provider);
       localStorage.setItem("llm_model", model);
-      localStorage.setItem("llm_api_key", apiKey);
-      localStorage.setItem("system_prompt", systemPrompt);
+      localStorage.setItem("vector_store", vectorStore);
+      // Do not store API keys or system prompts in localStorage for security reasons
       
       setSaved(true);
       setTimeout(() => setSaved(false), 1500);
@@ -135,7 +138,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="flex flex-col items-start justify-start min-h-screen p-8 ml-64 w-full">
+    <main className="flex flex-col items-start justify-start min-h-screen p-8 ml-72 w-full">
       <div className="w-full flex flex-col gap-8"></div>
       <form onSubmit={handleSave} className="bg-white dark:bg-zinc-900 rounded-lg shadow w-full flex flex-col p-8">
         <h1 className="text-2xl font-semibold mb-4">Settings</h1>
@@ -205,6 +208,21 @@ export default function SettingsPage() {
           </div>
           <p className="text-xs text-zinc-500 mt-1">
             Your API key is stored securely and never shared with third parties.
+          </p>
+        </div>
+        
+        <div className="mb-4">
+          <label className="block mb-2 text-sm font-medium">Vector Store Type</label>
+          <select
+            className="w-full p-2 border rounded bg-zinc-100 dark:bg-zinc-800"
+            value={vectorStore}
+            onChange={e => setVectorStore(e.target.value)}
+          >
+            <option value="memory">In-Memory (Default)</option>
+            <option value="chroma">Chroma DB</option>
+          </select>
+          <p className="text-xs text-zinc-500 mt-1">
+            In-Memory is simpler but requires document re-processing on restart. Chroma provides persistence but requires a running Chroma DB server.
           </p>
         </div>
         

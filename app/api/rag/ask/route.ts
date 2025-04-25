@@ -36,11 +36,11 @@ function readSettings() {
 }
 
 // POST /api/rag/ask?conversation=GUID
-// Body: { question: string, apiKey?: string }
+// Body: { question: string, useWebSearch?: boolean }
 export async function POST(req: NextRequest) {
   const conversation = req.nextUrl.searchParams.get("conversation");
   if (!conversation) return NextResponse.json({ error: "Missing conversation GUID" }, { status: 400 });
-  const { question, apiKey } = await req.json();
+  const { question, useWebSearch } = await req.json();
   if (!question) return NextResponse.json({ error: "Missing question" }, { status: 400 });
 
   // Get settings from app-settings.json
@@ -48,14 +48,103 @@ export async function POST(req: NextRequest) {
   const provider = settings.llm_provider || "openai";
   const modelName = settings.llm_model || "gpt-4o";
   const systemPrompt = settings.system_prompt || "You are a helpful assistant.";
+  const apiKey = settings.llm_api_key;
   
-  // Use user-supplied key or fallback to env
+  // Use settings-supplied key or fallback to env
   const openaiApiKey = provider === "openai" ? (apiKey || process.env.OPENAI_API_KEY) : undefined;
   const anthropicApiKey = provider === "anthropic" ? (apiKey || process.env.ANTHROPIC_API_KEY) : undefined;
 
   // Embeddings always use OpenAI for now
   const embeddings = new OpenAIEmbeddings({ apiKey: openaiApiKey || process.env.OPENAI_API_KEY });
-  const vectorStore = await Chroma.fromExistingCollection(embeddings, { collectionName: `conv_${conversation}` });
+  
+  // Determine which vector store to use based on settings
+  const vectorStoreType = settings.vector_store || "memory";
+  let vectorStore;
+  let useDirectQA = false;
+  
+  if (vectorStoreType === "chroma") {
+    try {
+      // Try to use Chroma if it's configured
+      vectorStore = await Chroma.fromExistingCollection(embeddings, { 
+        collectionName: `conv_${conversation}` 
+      });
+    } catch (error) {
+      console.error("Error connecting to Chroma:", error);
+      
+      // Fall back to memory vector store if available
+      const vectorStorePath = path.join(process.cwd(), "files", conversation, "vector_store.json");
+      if (fs.existsSync(vectorStorePath)) {
+        // Load from the saved JSON file
+        try {
+          const serializedData = JSON.parse(fs.readFileSync(vectorStorePath, 'utf8'));
+          // Create a new MemoryVectorStore with the saved data
+          const { memoryVectors } = serializedData;
+          
+          // Since we can't directly deserialize, we'll need to recreate the vector store
+          // This is a simplified approach - in a real app, you'd want a more robust solution
+          const documents = memoryVectors.map((vector: any) => ({
+            pageContent: vector.content,
+            metadata: vector.metadata
+          }));
+          
+          // Create a new memory vector store
+          const { MemoryVectorStore } = await import("langchain/vectorstores/memory");
+          vectorStore = new MemoryVectorStore(embeddings);
+          
+          // Add the documents to the vector store
+          if (documents.length > 0) {
+            await vectorStore.addDocuments(documents);
+          } else {
+            // Fall back to direct question answering
+            useDirectQA = true;
+          }
+        } catch (err) {
+          console.error("Error loading memory vector store:", err);
+          // Fall back to direct question answering
+          useDirectQA = true;
+        }
+      } else {
+        // Fall back to direct question answering
+        useDirectQA = true;
+      }
+    }
+  } else {
+    // Use memory vector store
+    const vectorStorePath = path.join(process.cwd(), "files", conversation, "vector_store.json");
+    if (fs.existsSync(vectorStorePath)) {
+      // Load from the saved JSON file
+      try {
+        const serializedData = JSON.parse(fs.readFileSync(vectorStorePath, 'utf8'));
+        // Create a new MemoryVectorStore with the saved data
+        const { memoryVectors } = serializedData;
+        
+        // Since we can't directly deserialize, we'll need to recreate the vector store
+        const documents = memoryVectors.map((vector: any) => ({
+          pageContent: vector.content,
+          metadata: vector.metadata
+        }));
+        
+        // Create a new memory vector store
+        const { MemoryVectorStore } = await import("langchain/vectorstores/memory");
+        vectorStore = new MemoryVectorStore(embeddings);
+        
+        // Add the documents to the vector store
+        if (documents.length > 0) {
+          await vectorStore.addDocuments(documents);
+        } else {
+          // Fall back to direct question answering
+          useDirectQA = true;
+        }
+      } catch (err) {
+        console.error("Error loading memory vector store:", err);
+        // Fall back to direct question answering
+        useDirectQA = true;
+      }
+    } else {
+      // Fall back to direct question answering
+      useDirectQA = true;
+    }
+  }
 
   let model;
   try {
@@ -63,7 +152,7 @@ export async function POST(req: NextRequest) {
       if (!anthropicApiKey) return NextResponse.json({ error: "Missing Anthropic API key" }, { status: 400 });
       model = new ChatAnthropic({ 
         anthropicApiKey, 
-        modelName: modelName // Use model from settings
+        modelName: modelName, // Use model from settings
         // Note: systemPrompt is handled differently for Anthropic models
         // We'll need to incorporate it in the chain or messages
       });
@@ -82,12 +171,69 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const chain = RetrievalQAChain.fromLLM(model, vectorStore.asRetriever());
-    const response = await chain.call({ query: question });
+    let response;
+    
+    if (useDirectQA) {
+      // If no vector store is available, use direct question answering
+      console.log("No vector store available, using direct question answering");
+      
+      // For OpenAI models
+      if (provider === "openai") {
+        const { ChatOpenAI } = await import("@langchain/openai");
+        const { ChatPromptTemplate } = await import("@langchain/core/prompts");
+        
+        const chat = new ChatOpenAI({
+          apiKey: openaiApiKey,
+          modelName: modelName,
+          temperature: 0.7,
+        });
+        
+        const prompt = ChatPromptTemplate.fromMessages([
+          ["system", systemPrompt || "You are a helpful AI assistant."],
+          ["human", "{question}"]
+        ]);
+        
+        const chain = prompt.pipe(chat);
+        const result = await chain.invoke({ question });
+        
+        response = { text: result.content.toString() };
+      } 
+      // For Anthropic models
+      else {
+        const { ChatAnthropic } = await import("@langchain/anthropic");
+        const { ChatPromptTemplate } = await import("@langchain/core/prompts");
+        
+        const chat = new ChatAnthropic({
+          anthropicApiKey,
+          modelName: modelName,
+          temperature: 0.7,
+        });
+        
+        const prompt = ChatPromptTemplate.fromMessages([
+          ["system", systemPrompt || "You are a helpful AI assistant."],
+          ["human", "{question}"]
+        ]);
+        
+        const chain = prompt.pipe(chat);
+        const result = await chain.invoke({ question });
+        
+        response = { text: result.content.toString() };
+      }
+    } else {
+      // Use RAG with the vector store
+      if (!vectorStore) {
+        throw new Error("Vector store is undefined but useDirectQA is false");
+      }
+      const chain = RetrievalQAChain.fromLLM(model, vectorStore.asRetriever());
+      response = await chain.call({ query: question });
+    }
 
-    return NextResponse.json({ answer: response.text });
+    return NextResponse.json({ 
+      answer: response.text,
+      usedRag: !useDirectQA
+    });
   } catch (error: any) {
-    console.error("Error in RAG chain:", error);
+    console.error("Error processing question:", error);
     return NextResponse.json({ 
       error: "Error processing your question", 
       details: error?.message || "Unknown error" 
