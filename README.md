@@ -63,6 +63,22 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 - `/api/rag`: RAG (Retrieval Augmented Generation) endpoints
 - `/api/web-search`: Web search integration
 
+## Screenshots
+
+Here are some screenshots of the application:
+
+### Conversation Interface
+<img src=".screenshots/Screenshot_20250425_103949.png" alt="Conversation Interface" width="800"/>
+
+### Document Groups
+<img src=".screenshots/Screenshot_20250425_104024.png" alt="Document Groups" width="800"/>
+
+### Document Management
+<img src=".screenshots/Screenshot_20250425_104031.png" alt="Document Management" width="800"/>
+
+### Settings Page
+<img src=".screenshots/Screenshot_20250425_104044.png" alt="Settings Page" width="800"/>
+
 ## License
 
 MIT
