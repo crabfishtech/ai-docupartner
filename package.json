@@ -9,6 +9,9 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@langchain/anthropic": "^0.3.19",
+    "@langchain/community": "^0.3.41",
+    "@langchain/openai": "^0.5.7",
     "@shadcn/ui": "^0.0.4",
     "chromadb": "^2.3.0",
     "class-variance-authority": "^0.7.1",
@@ -28,6 +31,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "node-loader": "^2.1.0",
     "tailwindcss": "^4",
     "tw-animate-css": "^1.2.8",
     "typescript": "^5"
