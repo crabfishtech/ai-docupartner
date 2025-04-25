@@ -1,3 +1,6 @@
+<img src=".screenshots/logo.png" alt="Conversation Interface" width="800"/>
+
+
 # AI DocuPartner
 
 AI DocuPartner is a document management system with AI-powered conversation capabilities. It allows you to upload, organize, and query documents using large language models (LLMs) like OpenAI and Anthropic.

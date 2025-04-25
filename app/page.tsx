@@ -88,12 +88,23 @@ export default function Home() {
 
   async function fetchConversation() {
     try {
+      // Fetch conversation details
       const res = await fetch(`/api/conversation/${conversationId}`);
-      if (!res.ok) throw new Error("Failed to fetch conversation");
-      const data = await res.json();
-      setConversationName(data.conversation.name);
+      if (!res.ok) {
+        console.error(`Error response from API: ${res.status} ${res.statusText}`);
+        throw new Error("Failed to fetch conversation");
+      }
       
-      // Set the selected group ID
+      const data = await res.json();
+      if (!data.conversation) {
+        console.error("Invalid response format:", data);
+        throw new Error("Invalid response format");
+      }
+      
+      // Set conversation name
+      setConversationName(data.conversation.name || "Conversation");
+      
+      // Set the selected group ID if it exists
       if (data.conversation.groupId) {
         setSelectedGroupId(data.conversation.groupId);
         
@@ -118,12 +129,20 @@ export default function Home() {
       }
 
       // Fetch messages for this conversation
-      const messagesRes = await fetch(`/api/messages?conversation=${conversationId}`);
-      if (!messagesRes.ok) throw new Error("Failed to fetch messages");
-      const messagesData = await messagesRes.json();
-      setMessages(messagesData.messages);
+      try {
+        const messagesRes = await fetch(`/api/messages?conversation=${conversationId}`);
+        if (messagesRes.ok) {
+          const messagesData = await messagesRes.json();
+          setMessages(messagesData.messages || []);
+        }
+      } catch (messageError) {
+        console.error("Error fetching messages:", messageError);
+        // Continue even if messages can't be fetched
+      }
     } catch (error) {
       console.error("Error fetching conversation:", error);
+      // Set a default state to avoid UI errors
+      setConversationName("Conversation");
     }
   }
 
@@ -286,14 +305,10 @@ export default function Home() {
           <h1 className="text-xl font-semibold">
             {conversationId === "new" ? "New Conversation" : conversationName || "Conversation"}
           </h1>
-          {currentGroupName && (
+          {/* Only show document group for existing conversations */}
+          {conversationId !== "new" && currentGroupName && (
             <div className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
               Document Group: {currentGroupName}
-            </div>
-          )}
-          {conversationId === "new" && selectedGroupId && documentGroups.length > 0 && (
-            <div className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              Document Group: {documentGroups.find(g => g.guid === selectedGroupId)?.name || "Unknown group"}
             </div>
           )}
         </div>

@@ -117,7 +117,10 @@ export default function SidebarNav() {
 
   return (
     <aside className="h-screen w-72 bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800 flex flex-col p-4 gap-4 fixed left-0 top-0 z-20">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center">
+        <img src="/logo.png" alt="Logo" className="" />
+      </div>
+      <div className="flex items-center justify-between mb-0">
         <span className="font-bold text-lg">My Conversations</span>
         <button
           className="bg-black text-white rounded px-2 py-1 text-sm hover:bg-zinc-800"
@@ -138,7 +141,7 @@ export default function SidebarNav() {
               const groupConversations = conversations.filter(conv => conv.groupId === group.guid);
               
               return (
-                <div key={group.guid} className="mb-2">
+                <div key={group.guid}>
                   {/* Group header/accordion toggle */}
                   <button 
                     className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors rounded"
@@ -238,6 +241,7 @@ export default function SidebarNav() {
       <div className="mt-auto flex flex-col gap-2">
         <Link href="/" className={`px-3 py-2 rounded text-sm ${pathname === "/" ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black" : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"}`}>Conversations</Link>
         <Link href="/documents" className={`px-3 py-2 rounded text-sm ${pathname === "/documents" ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black" : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"}`}>Documents</Link>
+        <Link href="/database" className={`px-3 py-2 rounded text-sm ${pathname === "/database" ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black" : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"}`}>Database</Link>
         <Link href="/settings" className={`px-3 py-2 rounded text-sm ${pathname === "/settings" ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-black" : "text-zinc-700 hover:bg-zinc-100 dark:text-zinc-200 dark:hover:bg-zinc-800"}`}>Settings</Link>
       </div>
     </aside>

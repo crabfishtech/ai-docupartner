@@ -19,7 +19,9 @@ export async function GET(
   }
 
   const conversationsData = JSON.parse(fs.readFileSync(conversationsPath, "utf8"));
-  const conversation = conversationsData.conversations.find((c: any) => c.guid === guid);
+  // Handle both formats: direct array or {conversations: [...]}
+  const conversationsArray = Array.isArray(conversationsData) ? conversationsData : conversationsData.conversations || [];
+  const conversation = conversationsArray.find((c: any) => c.guid === guid);
 
   if (!conversation) {
     return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
