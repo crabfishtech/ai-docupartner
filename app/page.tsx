@@ -14,6 +14,8 @@ type Message = {
   usedRag?: boolean; // Whether RAG was used for this message
 };
 
+
+
 type DocumentGroup = {
   guid: string;
   name: string;
@@ -148,84 +150,92 @@ export default function Home() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input,
+      content: input.trim(),
       timestamp: Date.now(),
     };
 
+    // Add user message to the UI
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsLoading(true);
 
     try {
-      // Create a new conversation if we're on the new conversation page
-      let currentConversationId = conversationId;
-      
+      // Create a new conversation if needed
       if (conversationId === "new") {
-        if (!selectedGroupId) {
-          alert("Please select or create a document group first");
-          setIsLoading(false);
-          return;
+        const res = await fetch("/api/conversation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ groupId: selectedGroupId || undefined }),
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to create conversation");
         }
-        
-        try {
-          // Create a new conversation with the selected group
-          const createRes = await fetch("/api/conversation", { 
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ groupId: selectedGroupId })
-          });
-          
-          if (!createRes.ok) throw new Error("Failed to create conversation");
-          const data = await createRes.json();
-          currentConversationId = data.guid;
-          
-          // Update URL without refreshing the page
-          window.history.pushState({}, "", `/?id=${currentConversationId}`);
-        } catch (error) {
-          console.error("Error creating conversation:", error);
-        }
+
+        const newConversation = await res.json();
+        // Redirect to the new conversation
+        window.location.href = `/?id=${newConversation.guid}`;
+        return;
       }
-      
-      // Determine if we should use web search
-      const endpoint = webSearch 
-        ? `/api/web-search` 
-        : `/api/rag/ask?conversation=${currentConversationId}`;
-      
-      const response = await fetch(endpoint, {
+
+
+
+      // Prepare API request
+      const payload = {
+        message: userMessage.content,
+        systemPrompt,
+        webSearch,
+      };
+
+      if (selectedGroupId) {
+        Object.assign(payload, { groupId: selectedGroupId });
+      }
+
+      // Send request to the AI
+      const response = await fetch(`/api/rag/ask?conversation=${conversationId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: input,
-          useWebSearch: webSearch,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error("Failed to get response");
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+
       const data = await response.json();
 
-      const assistantMessage: Message = {
+      // Add AI response to the UI
+      const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
         content: data.answer,
         timestamp: Date.now(),
-        usedRag: data.usedRag // Add the RAG usage information
+        usedRag: data.usedRag,
+        sourceType: data.sourceType,
+        sourceUrl: data.sourceUrl,
       };
 
-      setMessages((prev) => [...prev, assistantMessage]);
+      setMessages((prev) => [...prev, aiMessage]);
+
+
     } catch (error) {
-      console.error("Error getting response:", error);
+      console.error("Error:", error);
+      // Add error message
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: "Sorry, I encountered an error processing your request 1.",
+        role: "system",
+        content: "Sorry, there was an error processing your request.",
         timestamp: Date.now(),
       };
+      
       setMessages((prev) => [...prev, errorMessage]);
+      
+
     } finally {
       setIsLoading(false);
     }
@@ -336,7 +346,7 @@ export default function Home() {
           
           {messages.length === 0 && conversationId !== "new" && (
             <div className="text-center text-zinc-400 my-8">
-              Start a conversation or upload documents to chat about.
+              Loading...
             </div>
           )}
           

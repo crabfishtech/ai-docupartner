@@ -7,8 +7,9 @@ export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const guid = params.id;
-  if (!guid) {
+  // In Next.js 13+, params must be awaited
+  const { id } = params;
+  if (!id) {
     return NextResponse.json({ error: "Missing conversation GUID" }, { status: 400 });
   }
 
@@ -21,7 +22,7 @@ export async function GET(
   const conversationsData = JSON.parse(fs.readFileSync(conversationsPath, "utf8"));
   // Handle both formats: direct array or {conversations: [...]}
   const conversationsArray = Array.isArray(conversationsData) ? conversationsData : conversationsData.conversations || [];
-  const conversation = conversationsArray.find((c: any) => c.guid === guid);
+  const conversation = conversationsArray.find((c: any) => c.guid === id);
 
   if (!conversation) {
     return NextResponse.json({ error: "Conversation not found" }, { status: 404 });
@@ -35,8 +36,9 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const guid = params.id;
-  if (!guid) {
+  // In Next.js 13+, params must be awaited
+  const { id } = params;
+  if (!id) {
     return NextResponse.json({ error: "Missing conversation GUID" }, { status: 400 });
   }
 
@@ -49,7 +51,7 @@ export async function PUT(
   }
 
   const conversationsData = JSON.parse(fs.readFileSync(conversationsPath, "utf8"));
-  const conversationIndex = conversationsData.conversations.findIndex((c: any) => c.guid === guid);
+  const conversationIndex = conversationsData.conversations.findIndex((c: any) => c.guid === id);
 
   if (conversationIndex === -1) {
     return NextResponse.json({ error: "Conversation not found" }, { status: 404 });

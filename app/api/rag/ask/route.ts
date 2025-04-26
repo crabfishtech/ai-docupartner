@@ -7,6 +7,7 @@ import { ChatAnthropic } from "@langchain/anthropic";
 import { RetrievalQAChain } from "langchain/chains";
 import path from "path";
 import fs from "fs";
+import { addMessage } from "../../utils/message-storage";
 
 // Helper function to read settings
 function readSettings() {
@@ -191,6 +192,13 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Store the user message in XML format
+    await addMessage(conversation, {
+      role: "user",
+      content: question,
+      timestamp: Date.now()
+    });
+    
     let response;
     
     if (useDirectQA) {
@@ -247,6 +255,14 @@ export async function POST(req: NextRequest) {
       const chain = RetrievalQAChain.fromLLM(model, vectorStore.asRetriever());
       response = await chain.call({ query: question });
     }
+    
+    // Store the assistant's response in XML format
+    await addMessage(conversation, {
+      role: "assistant",
+      content: response.text,
+      timestamp: Date.now(),
+      usedRag: !useDirectQA
+    });
 
     return NextResponse.json({ 
       answer: response.text,
@@ -254,6 +270,19 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     console.error("Error processing question:", error);
+    
+    // Store the error message in XML format
+    try {
+      await addMessage(conversation, {
+        role: "system",
+        content: "Sorry, there was an error processing your request.",
+        timestamp: Date.now()
+      });
+    } catch (storageError) {
+      console.error("Error storing error message:", storageError);
+      // Continue even if storage fails
+    }
+    
     return NextResponse.json({ 
       error: "Error processing your question", 
       details: error?.message || "Unknown error" 
