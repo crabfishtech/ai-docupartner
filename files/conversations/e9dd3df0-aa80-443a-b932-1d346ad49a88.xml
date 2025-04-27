@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<messages>
+  <message id="f105ce27-4602-402c-91eb-3eca25945f6a" role="user" timestamp="1745720956464">
+    <content>Show me a very simple example of LlamaIndex, Python, and loading a document into a in memory rag</content>
+  </message>
+  <message id="d18032f5-290a-4acc-bb57-61056eb1b085" role="assistant" timestamp="1745720962359" usedRag="false">
+    <content>To create a simple example of using LlamaIndex (formerly known as GPT Index) for loading a document into an in-memory Retrieval-Augmented Generation (RAG) system, you'll need to perform several steps. This involves setting up your environment, loading the document, and then querying it.
+
+Here's a step-by-step guide:
+
+1. **Set Up Your Environment:**
+   Make sure you have Python installed, and then install the necessary packages. You can do this using pip:
+
+   ```bash
+   pip install llama-index
+   ```
+
+2. **Create a Python Script:**
+   Below is a simple script that demonstrates how to use LlamaIndex to load a document into an in-memory RAG system.
+
+   ```python
+   from llama_index import SimpleIndex
+
+   # Create a simple index
+   index = SimpleIndex()
+
+   # Load your document
+   document_text = """
+   LlamaIndex is a powerful tool for building and utilizing an index over your documents.
+   It allows for efficient querying and retrieval of information.
+   """
+
+   # Add the document to the index
+   index.add_document(document_text)
+
+   # Query the index
+   query = "What is LlamaIndex?"
+   results = index.query(query)
+
+   # Display results
+   print("Query Results:")
+   for result in results:
+       print(result)
+   ```
+
+3. **Run the Script:**
+   Save the script to a file, for example, `simple_rag_example.py`, and run it using:
+
+   ```bash
+   python simple_rag_example.py
+   ```
+
+4. **Understand the Output:**
+   The script creates a simple in-memory index of a given document and then allows you to query the index. The results will be printed out, showing the parts of the document that are relevant to your query.
+
+This example uses a hypothetical `SimpleIndex` class from `llama-index`. Make sure to refer to the actual documentation or codebase for `llama-index` to understand the exact classes and methods available, as APIs might change over time or might need additional configuration.</content>
+  </message>
+</messages>
