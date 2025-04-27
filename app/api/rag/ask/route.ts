@@ -36,19 +36,41 @@ function readSettings() {
   }
 }
 
+// Helper function for pretty-printing debug logs
+function debugLog(label: string, data: any) {
+  console.log('\n' + '='.repeat(80));
+  console.log(`${label}:`);
+  if (typeof data === 'object') {
+    console.log(JSON.stringify(data, null, 2));
+  } else {
+    console.log(data);
+  }
+  console.log('='.repeat(80) + '\n');
+}
+
 // POST /api/rag/ask?conversation=GUID
-// Body: { question: string, useWebSearch?: boolean }
+// Body: { message: string, systemPrompt?: string, webSearch?: boolean, groupId?: string }
 export async function POST(req: NextRequest) {
   const conversation = req.nextUrl.searchParams.get("conversation");
   if (!conversation) return NextResponse.json({ error: "Missing conversation GUID" }, { status: 400 });
-  const { question, useWebSearch } = await req.json();
-  if (!question) return NextResponse.json({ error: "Missing question" }, { status: 400 });
-
+  
+  const requestBody = await req.json();
+  const { message, webSearch, groupId } = requestBody;
+  
+  if (!message) return NextResponse.json({ error: "Missing message" }, { status: 400 });
+  
+  // For backward compatibility, support both 'message' and 'question' parameters
+  const question = message;
+  
   // Get settings from app-settings.json
   const settings = readSettings();
   const provider = settings.llm_provider || "openai";
   const modelName = settings.llm_model || "gpt-4o";
-  const systemPrompt = settings.system_prompt || "You are a helpful assistant.";
+  
+  // Always use the system prompt from settings
+  var systemPrompt = settings.system_prompt || "You are a helpful assistant.";
+  // Ensure all our responses are handled as markdown.
+  systemPrompt = systemPrompt + "Return all responses in Markdown.";
   const apiKey = settings.llm_api_key;
   
   // Use settings-supplied key or fallback to env
@@ -61,7 +83,7 @@ export async function POST(req: NextRequest) {
   // Determine which vector store to use based on settings
   const vectorStoreType = settings.vector_store || "memory";
   let vectorStore;
-  let useDirectQA = false;
+  let useDirectQA = webSearch || false;
   
   // Define paths for both conversation-specific and global vector stores
   const conversationVectorStorePath = path.join(process.cwd(), "files", "conversations", conversation, "vector_store.json");
@@ -199,6 +221,9 @@ export async function POST(req: NextRequest) {
       timestamp: Date.now()
     });
     
+    // Log the user question
+    debugLog('USER QUESTION', question);
+    
     let response;
     
     if (useDirectQA) {
@@ -222,9 +247,19 @@ export async function POST(req: NextRequest) {
         ]);
         
         const chain = prompt.pipe(chat);
+        
+        debugLog('SENDING TO OPENAI', {
+          model: modelName,
+          temperature: 0.7,
+          systemPrompt,
+          question
+        });
+        
         const result = await chain.invoke({ question });
         
         response = { text: result.content.toString() };
+        
+        debugLog('OPENAI RESPONSE', response.text);
       } 
       // For Anthropic models
       else {
@@ -243,9 +278,19 @@ export async function POST(req: NextRequest) {
         ]);
         
         const chain = prompt.pipe(chat);
+        
+        debugLog('SENDING TO OPENAI', {
+          model: modelName,
+          temperature: 0.7,
+          systemPrompt,
+          question
+        });
+        
         const result = await chain.invoke({ question });
         
         response = { text: result.content.toString() };
+        
+        debugLog('OPENAI RESPONSE', response.text);
       }
     } else {
       // Use RAG with the vector store
@@ -253,7 +298,17 @@ export async function POST(req: NextRequest) {
         throw new Error("Vector store is undefined but useDirectQA is false");
       }
       const chain = RetrievalQAChain.fromLLM(model, vectorStore.asRetriever());
+      
+      debugLog('SENDING RAG QUERY', {
+        provider,
+        model: modelName,
+        question
+      });
+      
       response = await chain.call({ query: question });
+      
+      // Log the RAG response
+      debugLog('RAG RESPONSE', response.text);
     }
     
     // Store the assistant's response in XML format
@@ -264,12 +319,24 @@ export async function POST(req: NextRequest) {
       usedRag: !useDirectQA
     });
 
+    // Log the final response being sent to client
+    debugLog('FINAL RESPONSE TO CLIENT', {
+      answer: response.text,
+      usedRag: !useDirectQA
+    });
+    
     return NextResponse.json({ 
       answer: response.text,
       usedRag: !useDirectQA
     });
   } catch (error: any) {
     console.error("Error processing question:", error);
+    
+    // Log the error
+    debugLog('ERROR PROCESSING QUESTION', {
+      error: error?.message || "Unknown error",
+      stack: error?.stack
+    });
     
     // Store the error message in XML format
     try {

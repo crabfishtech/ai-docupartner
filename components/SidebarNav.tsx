@@ -145,7 +145,7 @@ export default function SidebarNav() {
                 <div key={group.guid}>
                   {/* Group header/accordion toggle */}
                   <button 
-                    className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors rounded"
+                    className="w-full flex items-center justify-between px-2 py-2 text-left hover:bg-zinc-100 dark:hover:bg-zinc-900 transition-colors rounded"
                     onClick={() => toggleGroupExpanded(group.guid)}
                   >
                     <div className="font-medium flex items-center">

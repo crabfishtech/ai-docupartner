@@ -13,5 +13,10 @@
     "guid": "55f1d627-1af1-4544-b857-1cc0409c3107",
     "name": "Talking about Sales",
     "groupId": "b8b7ba57-067f-472c-965b-f8f85fbb3aaf"
+  },
+  {
+    "guid": "e9dd3df0-aa80-443a-b932-1d346ad49a88",
+    "name": "LlamaIndex example and python",
+    "groupId": "d3c06fa5-c2b4-4d8c-a3a7-a7b8cc9fc563"
   }
 ]

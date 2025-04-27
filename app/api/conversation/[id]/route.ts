@@ -8,7 +8,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   // In Next.js 13+, params must be awaited
-  const { id } = params;
+  //const { id } = params;
+  const { id } = await params;
   if (!id) {
     return NextResponse.json({ error: "Missing conversation GUID" }, { status: 400 });
   }
@@ -37,7 +38,8 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   // In Next.js 13+, params must be awaited
-  const { id } = params;
+  //const { id } = params;
+  const { id } = await params;
   if (!id) {
     return NextResponse.json({ error: "Missing conversation GUID" }, { status: 400 });
   }

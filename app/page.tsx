@@ -2,7 +2,14 @@
 import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import rehypeHighlight from "rehype-highlight";
+import rehypeSanitize from "rehype-sanitize";
+import remarkGfm from "remark-gfm";
 import DocumentGroupSelector from "../components/DocumentGroupSelector";
+import "./styles/markdown.css";
+import "./styles/highlight.css";
+import "highlight.js/styles/atom-one-dark.css";
 
 type Message = {
   id: string;
@@ -188,7 +195,6 @@ export default function Home() {
       // Prepare API request
       const payload = {
         message: userMessage.content,
-        systemPrompt,
         webSearch,
       };
 
@@ -346,7 +352,7 @@ export default function Home() {
           
           {messages.length === 0 && conversationId !== "new" && (
             <div className="text-center text-zinc-400 my-8">
-              Loading...
+              No conversation data was found.
             </div>
           )}
           
@@ -355,13 +361,44 @@ export default function Home() {
               key={message.id}
               className={`mb-4 ${
                 message.role === "user"
-                  ? "ml-auto max-w-3xl bg-black text-white"
+                  ? "ml-auto max-w-3xl bg-black text-white text-sm"
                   : message.role === "system"
-                  ? "mx-auto max-w-3xl bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200"
-                  : "mr-auto max-w-3xl bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200"
+                  ? "mx-auto max-w-3xl bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-sm"
+                  : "mr-auto max-w-3xl bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-sm"
               } rounded-lg p-3`}
             >
-              <div className="whitespace-pre-wrap">{message.content}</div>
+              {message.role === "assistant" ? (
+                <div className="markdown-content">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[
+                      rehypeSanitize, 
+                      [rehypeHighlight, { detect: true, ignoreMissing: true }]
+                    ]}
+                    components={{
+                      code: ({node, className, children, ...props}: any) => {
+                        const match = /language-(\w+)/.exec(className || '');
+                        const isInline = !match;
+                        return !isInline && match ? (
+                          <pre className={`language-${match[1]}`}>
+                            <code className={`hljs language-${match[1]}`} {...props}>
+                              {children}
+                            </code>
+                          </pre>
+                        ) : (
+                          <code className={className} {...props}>
+                            {children}
+                          </code>
+                        );
+                      }
+                    }}
+                  >
+                    {message.content}
+                  </ReactMarkdown>
+                </div>
+              ) : (
+                <div className="whitespace-pre-wrap">{message.content}</div>
+              )}
               <div className="flex justify-between text-xs opacity-70 mt-1">
                 <span>{new Date(message.timestamp).toLocaleTimeString()}</span>
                 {message.role === "assistant" && message.usedRag !== undefined && (
