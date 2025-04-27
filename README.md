@@ -3,7 +3,7 @@
 
 # AI DocuPartner
 
-AI DocuPartner is a document management system with AI-powered conversation capabilities. It allows you to upload, organize, and query documents using large language models (LLMs) like OpenAI and Anthropic.
+AI DocuPartner is a document management system with AI-powered conversation capabilities. It allows you to upload, organize, and query documents using large language models (LLMs) like OpenAI, future models supported in the future.
 
 ## Features
 
@@ -11,7 +11,7 @@ AI DocuPartner is a document management system with AI-powered conversation capa
 - **Document Groups**: Organize documents into custom groups
 - **Conversations**: Chat with AI about your documents
 - **Web Search**: Enhance AI responses with web search capabilities
-- **Multiple LLM Support**: Use OpenAI or Anthropic as your AI provider
+- **Multiple LLM Support**: Use OpenAI as your AI provider, future models supported in the future
 - **Customizable Settings**: Configure your API keys and system prompts
 
 ## Tech Stack
@@ -37,14 +37,6 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the application.
 
-## Environment Variables
-
-Create a `.env.local` file in the root directory with the following variables:
-
-```
-OPENAI_API_KEY=your_openai_api_key
-ANTHROPIC_API_KEY=your_anthropic_api_key
-```
 
 ## Project Structure
 
