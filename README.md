@@ -66,17 +66,29 @@ ANTHROPIC_API_KEY=your_anthropic_api_key
 
 Here are some screenshots of the application:
 
-### Conversation Interface
-<img src=".screenshots/Screenshot_20250425_103949.png" alt="Conversation Interface" width="800"/>
+### Conversation Interface with Markdown Support
+<img src=".screenshots/Screenshot_20250426_203043.png" alt="Conversation Interface with Markdown" width="800"/>
+
+### Code Syntax Highlighting
+<img src=".screenshots/Screenshot_20250426_203108.png" alt="Code Syntax Highlighting" width="800"/>
+
+### Document Upload
+<img src=".screenshots/Screenshot_20250426_203119.png" alt="Document Upload" width="800"/>
 
 ### Document Groups
-<img src=".screenshots/Screenshot_20250425_104024.png" alt="Document Groups" width="800"/>
+<img src=".screenshots/Screenshot_20250426_203201.png" alt="Document Groups" width="800"/>
 
 ### Document Management
-<img src=".screenshots/Screenshot_20250425_104031.png" alt="Document Management" width="800"/>
+<img src=".screenshots/Screenshot_20250426_203217.png" alt="Document Management" width="800"/>
+
+### Document Details
+<img src=".screenshots/Screenshot_20250426_203225.png" alt="Document Details" width="800"/>
+
+### Web Search Integration
+<img src=".screenshots/Screenshot_20250426_203233.png" alt="Web Search Integration" width="800"/>
 
 ### Settings Page
-<img src=".screenshots/Screenshot_20250425_104044.png" alt="Settings Page" width="800"/>
+<img src=".screenshots/Screenshot_20250426_203306.png" alt="Settings Page" width="800"/>
 
 ## License
 
