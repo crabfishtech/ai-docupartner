@@ -27,6 +27,13 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState("providers");
   
+  // LLM parameters
+  const [temperature, setTemperature] = useState<number>(0.7);
+  const [topP, setTopP] = useState<number>(1.0);
+  const [maxTokens, setMaxTokens] = useState<number>(2000);
+  const [presencePenalty, setPresencePenalty] = useState<number>(0.0);
+  const [frequencyPenalty, setFrequencyPenalty] = useState<number>(0.0);
+  
   // Define model categories and models for each provider
   const modelCategories = {
     openai: [
@@ -85,6 +92,20 @@ export default function SettingsPage() {
         if (settings.chroma_url) setChromaUrl(settings.chroma_url);
         if (settings.mcps) setMcps(settings.mcps);
         
+        // Load LLM parameters if available
+        if (settings.llm_parameters) {
+          if (settings.llm_parameters.temperature !== undefined) 
+            setTemperature(settings.llm_parameters.temperature);
+          if (settings.llm_parameters.top_p !== undefined) 
+            setTopP(settings.llm_parameters.top_p);
+          if (settings.llm_parameters.max_tokens !== undefined) 
+            setMaxTokens(settings.llm_parameters.max_tokens);
+          if (settings.llm_parameters.presence_penalty !== undefined) 
+            setPresencePenalty(settings.llm_parameters.presence_penalty);
+          if (settings.llm_parameters.frequency_penalty !== undefined) 
+            setFrequencyPenalty(settings.llm_parameters.frequency_penalty);
+        }
+        
         // If no model is set but provider is, set default model
         if (!settings.llm_model && settings.llm_provider) {
           const providerModels = models[settings.llm_provider as keyof typeof models];
@@ -131,7 +152,14 @@ export default function SettingsPage() {
           system_prompt: systemPrompt,
           vector_store: vectorStore,
           chroma_url: chromaUrl,
-          mcps: mcps
+          mcps: mcps,
+          llm_parameters: {
+            temperature,
+            top_p: topP,
+            max_tokens: maxTokens,
+            presence_penalty: presencePenalty,
+            frequency_penalty: frequencyPenalty
+          }
         })
       });
       
@@ -181,7 +209,7 @@ export default function SettingsPage() {
         <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="providers">Providers</TabsTrigger>
           <TabsTrigger value="prompts">Prompts</TabsTrigger>
-          <TabsTrigger value="services">Services</TabsTrigger>
+          <TabsTrigger value="services">Tooling</TabsTrigger>
         </TabsList>
         
         <TabsContent value="providers">
@@ -200,6 +228,16 @@ export default function SettingsPage() {
             setChromaUrl={setChromaUrl}
             modelCategories={modelCategories}
             models={models}
+            temperature={temperature}
+            setTemperature={setTemperature}
+            topP={topP}
+            setTopP={setTopP}
+            maxTokens={maxTokens}
+            setMaxTokens={setMaxTokens}
+            presencePenalty={presencePenalty}
+            setPresencePenalty={setPresencePenalty}
+            frequencyPenalty={frequencyPenalty}
+            setFrequencyPenalty={setFrequencyPenalty}
           />
         </TabsContent>
         

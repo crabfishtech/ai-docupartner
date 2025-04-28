@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<debugMessages>
+  <debugMessage id="9e1aeb86-c883-4018-8815-f0963cf20029" type="request" timestamp="1745871876033">
+    <content>{
+  "provider": "openai",
+  "model": "gpt-4o",
+  "question": "Can you tell me about Crabfishtech LLC ?"
+}</content>
+  </debugMessage>
+  <debugMessage id="cbe7cbca-8f19-47a4-bf37-2d377c6dfb32" type="response" timestamp="1745871880309">
+    <content>{
+  "answer": "I don't have specific information about Crabfishtech LLC beyond what is provided in the context. The context mentions CrabFishTech in relation to a sales deck about microfrontends using Module Federation, but no additional details about the company itself are provided.",
+  "usedRag": true
+}</content>
+  </debugMessage>
+</debugMessages>

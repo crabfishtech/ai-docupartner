@@ -21,6 +21,17 @@ type ProvidersTabProps = {
   setChromaUrl: (url: string) => void;
   modelCategories: any;
   models: any;
+  // LLM parameters
+  temperature?: number;
+  setTemperature?: (temp: number) => void;
+  topP?: number;
+  setTopP?: (value: number) => void;
+  maxTokens?: number;
+  setMaxTokens?: (tokens: number) => void;
+  presencePenalty?: number;
+  setPresencePenalty?: (value: number) => void;
+  frequencyPenalty?: number;
+  setFrequencyPenalty?: (value: number) => void;
 };
 
 export function ProvidersTab({
@@ -37,7 +48,18 @@ export function ProvidersTab({
   chromaUrl,
   setChromaUrl,
   modelCategories,
-  models
+  models,
+  // LLM parameters with defaults
+  temperature = 0.7,
+  setTemperature = () => {},
+  topP = 1.0,
+  setTopP = () => {},
+  maxTokens = 2000,
+  setMaxTokens = () => {},
+  presencePenalty = 0.0,
+  setPresencePenalty = () => {},
+  frequencyPenalty = 0.0,
+  setFrequencyPenalty = () => {}
 }: ProvidersTabProps) {
   return (
     <Card>
@@ -144,6 +166,115 @@ export function ProvidersTab({
               </p>
             </div>
           )}
+          
+          <div className="mt-8 mb-4">
+            <h3 className="text-lg font-medium mb-4">LLM Parameters</h3>
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+              These settings control how the AI generates responses. Adjust them to fine-tune the behavior of the model.
+            </p>
+            
+            <div className="space-y-6">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label htmlFor="temperature" className="text-sm font-medium">Temperature: {temperature}</Label>
+                  <span className="text-xs text-zinc-500">{temperature}</span>
+                </div>
+                <input
+                  id="temperature"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={temperature}
+                  onChange={e => setTemperature(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer dark:bg-zinc-700"
+                />
+                <p className="text-xs text-zinc-500 mt-1">
+                  Controls randomness: Lower values (0) make responses more focused and deterministic, while higher values (1) make output more random and creative.
+                </p>
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label htmlFor="topP" className="text-sm font-medium">Top P: {topP}</Label>
+                  <span className="text-xs text-zinc-500">{topP}</span>
+                </div>
+                <input
+                  id="topP"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={topP}
+                  onChange={e => setTopP(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer dark:bg-zinc-700"
+                />
+                <p className="text-xs text-zinc-500 mt-1">
+                  Controls diversity via nucleus sampling: 0.5 means half of all likelihood-weighted options are considered. Use either Temperature or Top P, not both.
+                </p>
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label htmlFor="maxTokens" className="text-sm font-medium">Max Tokens: {maxTokens}</Label>
+                  <span className="text-xs text-zinc-500">{maxTokens}</span>
+                </div>
+                <input
+                  id="maxTokens"
+                  type="range"
+                  min="100"
+                  max="4000"
+                  step="100"
+                  value={maxTokens}
+                  onChange={e => setMaxTokens(parseInt(e.target.value))}
+                  className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer dark:bg-zinc-700"
+                />
+                <p className="text-xs text-zinc-500 mt-1">
+                  The maximum number of tokens to generate. One token is roughly 4 characters for English text. Higher values allow for longer responses.
+                </p>
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label htmlFor="presencePenalty" className="text-sm font-medium">Presence Penalty: {presencePenalty}</Label>
+                  <span className="text-xs text-zinc-500">{presencePenalty}</span>
+                </div>
+                <input
+                  id="presencePenalty"
+                  type="range"
+                  min="-2"
+                  max="2"
+                  step="0.1"
+                  value={presencePenalty}
+                  onChange={e => setPresencePenalty(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer dark:bg-zinc-700"
+                />
+                <p className="text-xs text-zinc-500 mt-1">
+                  Positive values discourage the model from repeating the same topics. Increases the likelihood of introducing new topics.
+                </p>
+              </div>
+              
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <Label htmlFor="frequencyPenalty" className="text-sm font-medium">Frequency Penalty: {frequencyPenalty}</Label>
+                  <span className="text-xs text-zinc-500">{frequencyPenalty}</span>
+                </div>
+                <input
+                  id="frequencyPenalty"
+                  type="range"
+                  min="-2"
+                  max="2"
+                  step="0.1"
+                  value={frequencyPenalty}
+                  onChange={e => setFrequencyPenalty(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-zinc-200 rounded-lg appearance-none cursor-pointer dark:bg-zinc-700"
+                />
+                <p className="text-xs text-zinc-500 mt-1">
+                  Positive values discourage the model from repeating the same words or phrases. Useful for reducing verbatim repetition.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </CardContent>
     </Card>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<messages>
+  <message id="da7d9180-49d8-414c-b8fa-332f302195b5" role="user" timestamp="1745871876027">
+    <content>Can you tell me about Crabfishtech LLC ?</content>
+  </message>
+  <message id="c1620b5e-fec9-4955-ac4f-d798e7a90ca9" role="assistant" timestamp="1745871880308" usedRag="true">
+    <content>I don't have specific information about Crabfishtech LLC beyond what is provided in the context. The context mentions CrabFishTech in relation to a sales deck about microfrontends using Module Federation, but no additional details about the company itself are provided.</content>
+  </message>
+</messages>

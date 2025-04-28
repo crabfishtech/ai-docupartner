@@ -8,6 +8,7 @@ import { RetrievalQAChain } from "langchain/chains";
 import path from "path";
 import fs from "fs";
 import { addMessage } from "../../utils/message-storage";
+import { addDebugMessage } from "../../utils/debug-storage";
 
 // Helper function to read settings
 function readSettings() {
@@ -36,8 +37,8 @@ function readSettings() {
   }
 }
 
-// Helper function for pretty-printing debug logs
-function debugLog(label: string, data: any) {
+// Helper function for pretty-printing debug logs and saving to debug file
+async function debugLog(label: string, data: any, conversationId?: string) {
   console.log('\n' + '='.repeat(80));
   console.log(`${label}:`);
   if (typeof data === 'object') {
@@ -46,6 +47,24 @@ function debugLog(label: string, data: any) {
     console.log(data);
   }
   console.log('='.repeat(80) + '\n');
+  
+  // Save debug information to XML file if conversation ID is provided
+  // Only save JSON objects to avoid duplication, and only for specific labels
+  if (conversationId) {
+    // Only store SENDING TO OPENAI/ANTHROPIC and FINAL RESPONSE TO CLIENT
+    // Skip USER QUESTION (raw text) and other intermediate logs
+    if (label === 'SENDING TO OPENAI' || 
+        label === 'SENDING TO ANTHROPIC' || 
+        label === 'FINAL RESPONSE TO CLIENT') {
+      
+      const type = label.toLowerCase().includes('response') ? 'response' : 'request';
+      await addDebugMessage(conversationId, {
+        type,
+        content: data,
+        timestamp: Date.now()
+      });
+    }
+  }
 }
 
 // POST /api/rag/ask?conversation=GUID
@@ -66,6 +85,15 @@ export async function POST(req: NextRequest) {
   const settings = readSettings();
   const provider = settings.llm_provider || "openai";
   const modelName = settings.llm_model || "gpt-4o";
+  
+  // Get LLM parameters from settings or use defaults
+  const llmParams = settings.llm_parameters || {
+    temperature: 0.7,
+    top_p: 1.0,
+    max_tokens: 2000,
+    presence_penalty: 0.0,
+    frequency_penalty: 0.0
+  };
   
   // Always use the system prompt from settings
   var systemPrompt = settings.system_prompt || "You are a helpful assistant.";
@@ -221,8 +249,8 @@ export async function POST(req: NextRequest) {
       timestamp: Date.now()
     });
     
-    // Log the user question
-    debugLog('USER QUESTION', question);
+    // Log the user question (console only, not saved to debug file)
+    await debugLog('USER QUESTION', question);
     
     let response;
     
@@ -238,7 +266,11 @@ export async function POST(req: NextRequest) {
         const chat = new ChatOpenAI({
           apiKey: openaiApiKey,
           modelName: modelName,
-          temperature: 0.7,
+          temperature: llmParams.temperature,
+          topP: llmParams.top_p,
+          maxTokens: llmParams.max_tokens,
+          presencePenalty: llmParams.presence_penalty,
+          frequencyPenalty: llmParams.frequency_penalty
         });
         
         const prompt = ChatPromptTemplate.fromMessages([
@@ -248,18 +280,19 @@ export async function POST(req: NextRequest) {
         
         const chain = prompt.pipe(chat);
         
-        debugLog('SENDING TO OPENAI', {
+        await debugLog('SENDING TO OPENAI', {
           model: modelName,
-          temperature: 0.7,
+          parameters: llmParams,
           systemPrompt,
           question
-        });
+        }, conversation);
         
         const result = await chain.invoke({ question });
         
         response = { text: result.content.toString() };
         
-        debugLog('OPENAI RESPONSE', response.text);
+        // Log the OpenAI response (console only, not saved to debug file)
+        await debugLog('OPENAI RESPONSE', response.text);
       } 
       // For Anthropic models
       else {
@@ -269,7 +302,9 @@ export async function POST(req: NextRequest) {
         const chat = new ChatAnthropic({
           anthropicApiKey,
           modelName: modelName,
-          temperature: 0.7,
+          temperature: llmParams.temperature,
+          topP: llmParams.top_p,
+          maxTokens: llmParams.max_tokens
         });
         
         const prompt = ChatPromptTemplate.fromMessages([
@@ -279,18 +314,19 @@ export async function POST(req: NextRequest) {
         
         const chain = prompt.pipe(chat);
         
-        debugLog('SENDING TO OPENAI', {
+        await debugLog('SENDING TO OPENAI', {
           model: modelName,
-          temperature: 0.7,
+          parameters: llmParams,
           systemPrompt,
           question
-        });
+        }, conversation);
         
         const result = await chain.invoke({ question });
         
         response = { text: result.content.toString() };
         
-        debugLog('OPENAI RESPONSE', response.text);
+        // Log the OpenAI response (console only, not saved to debug file)
+        await debugLog('OPENAI RESPONSE', response.text);
       }
     } else {
       // Use RAG with the vector store
@@ -299,16 +335,16 @@ export async function POST(req: NextRequest) {
       }
       const chain = RetrievalQAChain.fromLLM(model, vectorStore.asRetriever());
       
-      debugLog('SENDING RAG QUERY', {
+      await debugLog('SENDING RAG QUERY', {
         provider,
         model: modelName,
         question
-      });
+      }, conversation);
       
       response = await chain.call({ query: question });
       
-      // Log the RAG response
-      debugLog('RAG RESPONSE', response.text);
+      // Log the RAG response (console only, not saved to debug file)
+      await debugLog('RAG RESPONSE', response.text);
     }
     
     // Store the assistant's response in XML format
@@ -320,10 +356,10 @@ export async function POST(req: NextRequest) {
     });
 
     // Log the final response being sent to client
-    debugLog('FINAL RESPONSE TO CLIENT', {
+    await debugLog('FINAL RESPONSE TO CLIENT', {
       answer: response.text,
       usedRag: !useDirectQA
-    });
+    }, conversation);
     
     return NextResponse.json({ 
       answer: response.text,
@@ -333,10 +369,10 @@ export async function POST(req: NextRequest) {
     console.error("Error processing question:", error);
     
     // Log the error
-    debugLog('ERROR PROCESSING QUESTION', {
+    await debugLog('ERROR PROCESSING QUESTION', {
       error: error?.message || "Unknown error",
       stack: error?.stack
-    });
+    }, conversation);
     
     // Store the error message in XML format
     try {

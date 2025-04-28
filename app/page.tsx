@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
+import DebugDrawer from "../components/DebugDrawer";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
@@ -19,6 +20,13 @@ type Message = {
   sourceType?: "document" | "web";
   sourceUrl?: string;
   usedRag?: boolean; // Whether RAG was used for this message
+};
+
+type DebugMessage = {
+  id: string;
+  type: 'request' | 'response';
+  content: any;
+  timestamp: number;
 };
 
 
@@ -44,6 +52,9 @@ export default function Home() {
   const [selectedGroupId, setSelectedGroupId] = useState<string>("");
   const [documentGroups, setDocumentGroups] = useState<DocumentGroup[]>([]);
   const [currentGroupName, setCurrentGroupName] = useState<string>("");
+  const [debugMode, setDebugMode] = useState(false);
+  const [debugMessages, setDebugMessages] = useState<DebugMessage[]>([]);
+  const [loadingDebugMessages, setLoadingDebugMessages] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -77,6 +88,13 @@ export default function Home() {
     scrollToBottom();
   }, [messages]);
   
+  // Fetch debug messages when debug mode is toggled on
+  useEffect(() => {
+    if (debugMode && conversationId !== "new") {
+      fetchDebugMessages();
+    }
+  }, [debugMode, conversationId]);
+  
   // Close menu when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -95,6 +113,34 @@ export default function Home() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  // Fetch debug messages from the server
+  async function fetchDebugMessages() {
+    if (conversationId === "new") return;
+    
+    try {
+      setLoadingDebugMessages(true);
+      const res = await fetch(`/api/debug/${conversationId}`);
+      if (!res.ok) throw new Error("Failed to fetch debug messages");
+      
+      const data = await res.json();
+      if (data.debugMessages) {
+        // Convert the format to match our DebugMessage type
+        const formattedMessages = data.debugMessages.map((msg: any) => ({
+          id: msg.id,
+          type: msg.type as 'request' | 'response',
+          content: msg.content,
+          timestamp: msg.timestamp
+        }));
+        
+        setDebugMessages(formattedMessages);
+      }
+    } catch (error) {
+      console.error("Error fetching debug messages:", error);
+    } finally {
+      setLoadingDebugMessages(false);
+    }
+  }
+  
   async function fetchConversation() {
     try {
       // Fetch conversation details
@@ -202,6 +248,12 @@ export default function Home() {
         Object.assign(payload, { groupId: selectedGroupId });
       }
 
+      // Clear debug messages when starting a new request in debug mode
+      if (debugMode) {
+        // We'll fetch the debug messages from the server after the response
+        setDebugMessages([]);
+      }
+
       // Send request to the AI
       const response = await fetch(`/api/rag/ask?conversation=${conversationId}`, {
         method: "POST",
@@ -214,6 +266,11 @@ export default function Home() {
       }
 
       const data = await response.json();
+
+      // Fetch debug messages if debug mode is enabled
+      if (debugMode) {
+        fetchDebugMessages();
+      }
 
       // Add AI response to the UI
       const aiMessage: Message = {
@@ -314,8 +371,9 @@ export default function Home() {
   }
 
   return (
-    <main className="flex flex-col h-screen p-0 ml-72 w-full">
-      <div className="flex flex-col h-full">
+    <main className="flex h-screen w-[calc(100%-18rem)] ml-72">
+      {/* Main content */}
+      <div className={`flex flex-col ${debugMode ? 'w-2/3' : 'w-full'}`}>
         {/* Chat header */}
         <div className="bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 p-4">
           <h1 className="text-xl font-semibold">
@@ -361,10 +419,10 @@ export default function Home() {
               key={message.id}
               className={`mb-4 ${
                 message.role === "user"
-                  ? "ml-auto max-w-3xl bg-black text-white text-sm"
+                  ? "ml-auto bg-black text-white text-sm"
                   : message.role === "system"
-                  ? "mx-auto max-w-3xl bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-sm"
-                  : "mr-auto max-w-3xl bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-sm"
+                  ? "mx-auto bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-sm"
+                  : "mr-auto bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-zinc-200 text-sm"
               } rounded-lg p-3`}
             >
               {message.role === "assistant" ? (
@@ -461,6 +519,21 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => {
+                          setDebugMode(!debugMode);
+                          setMenuOpen(false);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm text-zinc-700 dark:text-zinc-200 hover:bg-zinc-100 dark:hover:bg-zinc-700 flex items-center justify-between"
+                      >
+                        <span>{debugMode ? "Disable debug mode" : "Enable debug mode"}</span>
+                        {debugMode && (
+                          <span className="flex h-4 w-4 items-center justify-center rounded-full bg-purple-500 text-white text-xs">
+                            ✓
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
                           setWebSearch(!webSearch);
                           setMenuOpen(false);
                         }}
@@ -503,18 +576,28 @@ export default function Home() {
             </div>
             {webSearch && (
               <div className="flex items-center px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-xs text-blue-600 dark:text-blue-300 rounded">
-                <span>Web search enabled - responses may include information from the internet</span>
-                <button 
-                  onClick={() => setWebSearch(false)} 
-                  className="ml-auto text-blue-500 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
-                >
-                  ✕
-                </button>
+                <span>Web search enabled - responses may include information from the internet.</span>
+              </div>
+            )}
+            {debugMode && (
+              <div className="flex items-center px-2 py-1 bg-purple-50 dark:bg-purple-900/20 text-xs text-purple-600 dark:text-purple-300 rounded">
+                <span>Debug mode enabled - you can see communications with the LLM to the right.</span>
               </div>
             )}
           </form>
         </div>
       </div>
+      
+      {/* Debug Drawer - mounted alongside the chat */}
+      {debugMode && (
+        <div className="w-1/3 h-full border-l border-zinc-200 dark:border-zinc-800">
+          <DebugDrawer 
+            messages={debugMessages} 
+            onClose={() => setDebugMode(false)}
+            isLoading={loadingDebugMessages}
+          />
+        </div>
+      )}
     </main>
   );
 }
